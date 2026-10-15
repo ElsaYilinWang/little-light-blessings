@@ -1,0 +1,29 @@
+// Run against a fresh local Wrangler server: node test/integration.mjs
+import assert from 'node:assert/strict';
+import {seal} from '../public/crypto.js';
+import {webcrypto} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {digest} from '../src/worker.js';
+if (!globalThis.crypto) Object.defineProperty(globalThis,'crypto',{value:webcrypto});
+const base='http://localhost:8787';
+const post=(path,data,origin=base)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',Origin:origin},body:JSON.stringify(data)});
+const page=await fetch(base);assert.equal(page.status,200);assert.match(page.headers.get('content-security-policy'),/frame-ancestors 'none'/);assert.equal(page.headers.get('referrer-policy'),'no-referrer');
+const sealed=await seal({title:'Private',blessing:'Not logged',keepsake:'Held close',theme:'dawn'});
+const created=await post('/api/share',{payload:sealed.payload});assert.equal(created.status,200);const gift=await created.json();
+assert.equal((await fetch(base+'/api/redeem')).status,405);
+assert.equal((await fetch(base+'/api/redeem',{method:'HEAD'})).status,405);
+assert.equal((await post('/api/redeem',{token:gift.token},'https://evil.example')).status,403);
+const concurrent=await Promise.all([post('/api/redeem',{token:gift.token}),post('/api/redeem',{token:gift.token})]);
+assert.deepEqual(concurrent.map(r=>r.status).sort(),[200,410]);
+assert.equal((await concurrent.find(r=>r.status===200).json()).payload,sealed.payload);
+assert.equal((await post('/api/event',{event:'created',name:'Do not store'})).status,400);
+assert.equal((await post('/api/event',{event:'faith:Christian'})).status,400);
+assert.equal((await post('/api/share',{payload:'bad'})).status,400);
+assert.equal((await post('/api/share',{payload:'a'.repeat(25000)})).status,400);
+const expires=await (await post('/api/share',{payload:sealed.payload})).json();
+execFileSync(process.execPath,['node_modules/wrangler/bin/wrangler.js','d1','execute','little-light','--local','--command',`UPDATE gifts SET expires_at=0 WHERE token_hash='${await digest(expires.token)}'`],{stdio:'pipe'});
+assert.equal((await post('/api/redeem',{token:expires.token})).status,410);
+let limited=false;
+for(let i=0;i<11;i++){const r=await post('/api/share',{payload:sealed.payload});if(r.status===429){limited=true;break;}assert.equal(r.status,200);}
+assert.ok(limited,'Share rate limit must apply');
+console.log('PASS: headers, preview-safe GET/HEAD, origin rejection, concurrent single redemption, strict analytics, payload bounds, expiry, rate limiting');
