@@ -6,10 +6,10 @@
   "engines": { "node": ">=22" },
   "scripts": {
     "dev": "wrangler dev",
-    "test": "node --test test/engine.test.js",
+    "test": "node --test test/engine.test.js test/media.test.js",
     "deploy": "wrangler deploy",
     "db:local": "wrangler d1 migrations apply little-light --local",
-    "check": "node --check src/worker.js && node --check public/app.js"
+    "check": "node --check src/worker.js && node --check public/app.js && node --check public/media.js && node --check public/sharing.js"
   },
   "devDependencies": {
     "wrangler": "^4.151.0"

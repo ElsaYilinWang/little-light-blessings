@@ -27,7 +27,7 @@ export async function api(request, env) {
   if (request.method !== 'POST') return json({error:'Use an explicit open action.'}, 405);
   if (request.headers.get('Origin') !== url.origin) return json({error:'Origin rejected.'}, 403);
   if (!env.DB || !env.RATE_SALT) return json({error:'Sharing is not configured yet.'}, 503);
-  if (!['/api/share','/api/redeem','/api/event'].includes(path)) return json({error:'Not found.'},404);
+  if (!['/api/share','/api/redeem','/api/revoke','/api/event'].includes(path)) return json({error:'Not found.'},404);
   const now = Math.floor(Date.now()/1000);
   if (!await rate(request, env, path === '/api/share' ? 'share' : 'other', now)) return json({error:'Please try again later.'},429);
   const data = await body(request);
@@ -48,6 +48,12 @@ export async function api(request, env) {
     await count(env,'share_created').catch(()=>{}); return json({token,expiresAt});
   }
   if (typeof data.token !== 'string' || !/^[a-f0-9]{64}$/.test(data.token)) return json({error:'Invalid link.'},400);
+  if (path === '/api/revoke') {
+    // Possession of the bearer link already permits consuming/deleting its contents.
+    // A separate explicit action erases the message without returning/decrypting it.
+    await env.DB.prepare('DELETE FROM gifts WHERE token_hash=?').bind(await digest(data.token)).run();
+    return json({ok:true});
+  }
   // Single atomic SQL statement: concurrent opens have exactly one winner; consume by deletion.
   const gift = await env.DB.prepare('DELETE FROM gifts WHERE token_hash=? AND expires_at>? RETURNING payload').bind(await digest(data.token),now).first();
   if (!gift) return json({error:'This link has expired or has already been opened.'},410);
@@ -57,7 +63,7 @@ function secure(response) {
   const headers = new Headers(response.headers);
   headers.set('Referrer-Policy','no-referrer'); headers.set('X-Content-Type-Options','nosniff');
   headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
-  headers.set('Permissions-Policy','camera=(), microphone=(), geolocation=()');
+  headers.set('Permissions-Policy','camera=(self), microphone=(self), geolocation=()');
   return new Response(response.body,{status:response.status,headers});
 }
 export default {

@@ -1,12 +1,31 @@
-import {templateProvider as provider, faiths, tones} from './engine.js';
+import {templateProvider as provider, faiths, tones, keywords, suggestions} from './engine.js';
 import {seal, unseal} from './crypto.js';
 import t from './locales/en.js';
 import {translateUI} from './i18n.js';
+import {installLocalMedia} from './media.js';
+import {installSharing} from './sharing.js';
 translateUI();
 const $ = id => document.getElementById(id);
 let result, input, recipientMode = false;
+let sharedToken;
+const localMedia = installLocalMedia(()=>result);
+installSharing(()=>result,draw,message=>status(message));
 const status = message => { $('status').textContent = message; };
 for (const [id, values] of [['faith',faiths],['tone',tones]]) for (const value of values) {const option = new Option(value,value); $(id).add(option);}
+function chips() {
+  const preset=$('form').elements.preset.value, chosen=keywords($('keywords').value);
+  $('keywordChips').replaceChildren();
+  for(const phrase of suggestions[preset]) {
+    const button=document.createElement('button');button.type='button';button.textContent=phrase;button.className='chip';
+    const active=chosen.some(word=>word.toLowerCase()===phrase);button.setAttribute('aria-pressed',String(active));
+    button.onclick=()=>{if(active)$('keywords').value=chosen.filter(word=>word.toLowerCase()!==phrase).join(', ');else if(chosen.length<5)$('keywords').value=[...chosen,phrase].join(', ');else status('Choose up to five phrases.');chips();};
+    $('keywordChips').append(button);
+  }
+  $('keywordCount').textContent=`${chosen.length} / 5 phrases`;
+}
+$('keywords').addEventListener('input',chips);
+for(const radio of $('form').elements.preset)radio.addEventListener('change',chips);
+chips();
 async function post(path, data) {
   const response = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   const value = await response.json(); if (!response.ok) throw new Error(value.error || t.error); return value;
@@ -47,30 +66,42 @@ export function draw(canvas, value, wallpaper=false) {
 }
 function sync() {if(!result)return;result={title:$('title').value,blessing:$('blessing').value,keepsake:$('keepsake').value,sender:$('signature').value,theme:$('theme').value,script:$('script').value};draw($('canvas'),result);$('linkWrap').hidden=true;}
 function show(value) {
+  localMedia.reset();
   result=value;$('compose').hidden=true;$('recipient').hidden=true;$('result').hidden=false;
   for(const id of ['title','blessing','keepsake','theme','script'])$(id).value=value[id] || '';
   $('signature').value=value.sender || '';$('scriptWrap').hidden=!value.script;
   $('scriptButton').hidden=recipientMode;$('share').hidden=recipientMode;$('back').hidden=recipientMode;
   $('linkWrap').hidden=true;draw($('canvas'),value);$('resultHeading').textContent=recipientMode?'A little light, for you.':'Your little light.';window.scrollTo(0,0);
 }
-$('form').addEventListener('submit',async e=>{e.preventDefault();input=Object.fromEntries(new FormData(e.target));show(await provider.generate(input));event('created');});
+$('form').addEventListener('submit',async e=>{
+  e.preventDefault();status('');input=Object.fromEntries(new FormData(e.target));
+  const raw=input.keywords.split(/[,;\n]/).map(word=>word.trim()).filter(Boolean);
+  if(raw.length>5 || raw.some(word=>word.length>40)){status('Use up to five short phrases, with no more than 40 characters each.');return;}
+  input.keywords=keywords(raw);
+  try {show(await provider.generate(input));event('created');}catch(error){status(error.message);}
+});
 for(const id of ['title','blessing','keepsake','signature','theme','script'])$(id).addEventListener('input',sync);
-$('scriptButton').onclick=busy('scriptButton',async()=>{if(result.script && !confirm('Replace your current script with a new draft?'))return;$('script').value=await provider.script(input,result);$('scriptWrap').hidden=false;sync();event('script_requested');});
+$('scriptButton').onclick=busy('scriptButton',async()=>{if(result.script && !confirm('Replace your current script with a new draft?'))return;$('script').value=await provider.script(input,result,Number($('duration').value));$('scriptWrap').hidden=false;sync();event('script_requested');});
 async function save(wallpaper) {
   const canvas=document.createElement('canvas');draw(canvas,result,wallpaper);
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw new Error(t.error);
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=wallpaper?'little-light-wallpaper.png':'little-light-card.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);event(wallpaper?'wallpaper_saved':'card_saved');status(t.saved);
 }
 $('cardSave').onclick=busy('cardSave',()=>save(false));$('wallSave').onclick=busy('wallSave',()=>save(true));
-$('share').onclick=busy('share',async()=>{const sealed=await seal(result);const gift=await post('/api/share',{payload:sealed.payload});$('shareLink').value=`${location.origin}/#gift=${gift.token}&key=${sealed.key}`;$('linkWrap').hidden=false;status(t.linkCreated);});
+$('share').onclick=busy('share',async()=>{const sealed=await seal(result);const gift=await post('/api/share',{payload:sealed.payload});sharedToken=gift.token;$('shareLink').value=`${location.origin}/#gift=${gift.token}&key=${sealed.key}`;$('linkWrap').hidden=false;status(t.linkCreated);});
+$('deleteLink').onclick=busy('deleteLink',async()=>{await post('/api/revoke',{token:sharedToken});$('linkWrap').hidden=true;sharedToken=undefined;status('Shared message deleted. This link no longer works. Saved or externally shared copies are unchanged.');});
 $('copy').onclick=busy('copy',async()=>{await navigator.clipboard.writeText($('shareLink').value);status(t.copied);});
-$('back').onclick=()=>{$('compose').hidden=false;$('result').hidden=true;status('');};
+$('back').onclick=()=>{localMedia.reset();$('compose').hidden=false;$('result').hidden=true;status('');};
 const fragment=new URLSearchParams(location.hash.slice(1));
 if(fragment.has('gift')) {
   recipientMode=true;$('compose').hidden=true;$('recipient').hidden=false;
   const token=fragment.get('gift'),key=fragment.get('key');
   // Remove credentials from the visible address/history immediately, retaining only in memory.
   history.replaceState(null,'',location.pathname);
+  $('deleteUnopened').onclick=busy('deleteUnopened',async()=>{
+    await post('/api/revoke',{token});$('redeem').hidden=true;$('deleteUnopened').hidden=true;
+    status('Message deleted without opening. Saved or externally shared copies are unchanged.');
+  });
   $('redeem').onclick=busy('redeem',async()=>{
     if(!/^[a-f0-9]{64}$/.test(token || '') || !/^[A-Za-z0-9_-]{43}$/.test(key || ''))throw new Error('This link is incomplete. Ask the sender for the full link.');
     // Validate the key before consuming. Ciphertext authentication is possible only after redeem.

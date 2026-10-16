@@ -20,10 +20,15 @@ assert.equal((await post('/api/event',{event:'created',name:'Do not store'})).st
 assert.equal((await post('/api/event',{event:'faith:Christian'})).status,400);
 assert.equal((await post('/api/share',{payload:'bad'})).status,400);
 assert.equal((await post('/api/share',{payload:'a'.repeat(25000)})).status,400);
+const revoked=await (await post('/api/share',{payload:sealed.payload})).json();
+assert.equal((await fetch(base+'/api/revoke')).status,405);
+assert.equal((await post('/api/revoke',{token:revoked.token},'https://evil.example')).status,403);
+assert.deepEqual(await (await post('/api/revoke',{token:revoked.token})).json(),{ok:true});
+assert.equal((await post('/api/redeem',{token:revoked.token})).status,410);
 const expires=await (await post('/api/share',{payload:sealed.payload})).json();
 execFileSync(process.execPath,['node_modules/wrangler/bin/wrangler.js','d1','execute','little-light','--local','--command',`UPDATE gifts SET expires_at=0 WHERE token_hash='${await digest(expires.token)}'`],{stdio:'pipe'});
 assert.equal((await post('/api/redeem',{token:expires.token})).status,410);
 let limited=false;
 for(let i=0;i<11;i++){const r=await post('/api/share',{payload:sealed.payload});if(r.status===429){limited=true;break;}assert.equal(r.status,200);}
 assert.ok(limited,'Share rate limit must apply');
-console.log('PASS: headers, preview-safe GET/HEAD, origin rejection, concurrent single redemption, strict analytics, payload bounds, expiry, rate limiting');
+console.log('PASS: headers, preview-safe GET/HEAD, origin rejection, concurrent single redemption, explicit revocation, strict analytics, payload bounds, expiry, rate limiting');
