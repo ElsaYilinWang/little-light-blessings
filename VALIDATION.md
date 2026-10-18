@@ -20,4 +20,6 @@ Verified locally using Node 24 and Wrangler 4.151.0:
 
 Limits: no production Cloudflare deployment or real iOS/Android device test; no actual WhatsApp/Instagram post. Native share target availability, video codec playback and recording on physical devices remain unverified. Browser testing is not a substitute for that pilot check. Optional Turnstile integration is a server hook, disabled by default. No live LLM calls are made. GDPR operator requirements in PRIVACY.md remain incomplete before public launch.
 
-Publishing: initial local Git commit on main. Connected GitHub account: ElsaYilinWang. Repository creation is not exposed by the available GitHub connector, the GitHub CLI is absent, and existing accessible projects are unsuitable. Create an empty public `little-light-blessings` repository, then run the two publishing commands in README. Nothing was pushed into another project.
+## Publication preparation — 2026-10-18
+
+The owner supplied the new `ElsaYilinWang/little-light-blessings` repository. Its remote was checked and had no refs before the initial push. Documentation now prioritises the five-sender card/wallpaper pilot and labels existing media experimental. Six unit tests are rerun before publication. Source publication does not imply Cloudflare deployment, real-device media verification or completed GDPR launch requirements.
