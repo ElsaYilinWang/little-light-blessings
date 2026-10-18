@@ -16,6 +16,7 @@ const status = message => { $('status').textContent = message; };
 for (const [id, values] of [['faith',faiths],['tone',tones]]) for (const value of values) {const option = new Option(value,value); $(id).add(option);}
 function chips() {
   const preset=$('form').elements.preset.value, chosen=keywords($('keywords').value);
+  $('keywords').placeholder=t.wordExamples[preset];
   $('keywordChips').replaceChildren();
   for(const phrase of suggestions[preset]) {
     const button=document.createElement('button');button.type='button';button.textContent=phrase;button.className='chip';
@@ -26,7 +27,7 @@ function chips() {
   $('keywordCount').textContent=`${chosen.length} / 5 phrases`;
 }
 $('keywords').addEventListener('input',chips);
-for(const radio of $('form').elements.preset)radio.addEventListener('change',chips);
+for(const radio of $('form').elements.preset)radio.addEventListener('change',()=>{$('keywords').value='';status('');chips();});
 chips();
 async function post(path, data) {
   const response = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
