@@ -1,0 +1,20 @@
+import {cp, mkdir, readFile, writeFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+// Separate static test artifact. The Cloudflare app and its secure backend remain intact.
+await mkdir('dist',{recursive:true});
+await cp('public','dist',{recursive:true});
+let app=await readFile('dist/app.js','utf8');
+const post=/async function post\(path, data\) \{[\s\S]*?\n\}/;
+assert.ok(post.test(app),'Expected API wrapper');
+app=app.replace(post,`async function post() { throw new Error('Private test: recipient links are not enabled. Card images can still be saved or shared.'); }`);
+app=app.replace(/^function event\(name\).*$/m,'function event() {}');
+assert.ok(!app.includes('await fetch('),'Private test must not call the backend');
+await writeFile('dist/app.js',app);
+let html=await readFile('dist/index.html','utf8');
+html=html.replace('<main>',`<main><aside class="testNotice" role="note"><strong>Private test · for your account only</strong><p>Create, edit, save and share card images. Recipient links and server analytics are disabled here; the Cloudflare backend comes later. Use sample details while testing.</p></aside>`);
+html=html.replace('id="share" class="secondary"','id="share" disabled class="secondary" title="Available after Cloudflare deployment"');
+await writeFile('dist/index.html',html);
+await writeFile('dist/style.css',(await readFile('dist/style.css','utf8'))+'\n.testNotice{padding:16px 20px;border:1px solid #dfd9df;border-radius:10px;background:#eee9f2;font-size:13px}.testNotice p{margin:5px 0 0}\n');
+await writeFile('dist/_headers',`/*\n  Referrer-Policy: no-referrer\n  X-Content-Type-Options: nosniff\n  Permissions-Policy: camera=(self), microphone=(self), geolocation=()\n  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'\n`);
+assert.ok(html.includes('id="share" disabled'));
+console.log('Built private static test: backend calls disabled; no media or secrets included.');

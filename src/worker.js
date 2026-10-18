@@ -62,7 +62,7 @@ export async function api(request, env) {
 function secure(response) {
   const headers = new Headers(response.headers);
   headers.set('Referrer-Policy','no-referrer'); headers.set('X-Content-Type-Options','nosniff');
-  headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
+  headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
   headers.set('Permissions-Policy','camera=(self), microphone=(self), geolocation=()');
   return new Response(response.body,{status:response.status,headers});
 }

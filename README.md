@@ -54,6 +54,8 @@ The integration check uses real local D1 SQL and concurrent HTTP requests. Repea
 
 ## Deployment
 
+An owner-private Sites test is configured in `.openai/hosting.json`. Build its static artifact with `node scripts/build-private-preview.mjs`. This separate artifact disables recipient links and server analytics, adds a visible test notice, and retains local card editing, export and optional media. It has no database and does not publish the site to other people. The original Cloudflare app below remains the route to testing recipient links. GitHub stores source code; it is not the website host.
+
 1. Create a free Cloudflare account, then `npx wrangler login`.
 2. `npx wrangler d1 create little-light`; put the returned `database_id` in `wrangler.jsonc`.
 3. `npx wrangler d1 migrations apply little-light --remote`.
