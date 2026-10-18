@@ -1,4 +1,4 @@
-import {templateProvider as provider, faiths, tones, keywords, suggestions} from './engine.js';
+import {templateProvider as provider, faiths, tones, keywords, suggestions, scriptQuote} from './engine.js';
 import {seal, unseal} from './crypto.js';
 import t from './locales/en.js';
 import {translateUI} from './i18n.js';
@@ -8,7 +8,9 @@ translateUI();
 const $ = id => document.getElementById(id);
 let result, input, recipientMode = false;
 let sharedToken;
-const localMedia = installLocalMedia(()=>result);
+const localMedia = installLocalMedia(()=>result,async()=>{
+  if(!result.script && input){$('script').value=await provider.script(input,result,Number($('duration').value));$('scriptWrap').hidden=false;sync();event('script_requested');}
+});
 installSharing(()=>result,draw,message=>status(message));
 const status = message => { $('status').textContent = message; };
 for (const [id, values] of [['faith',faiths],['tone',tones]]) for (const value of values) {const option = new Option(value,value); $(id).add(option);}
@@ -64,12 +66,13 @@ export function draw(canvas, value, wallpaper=false) {
   for(const line of wrap(ctx,value.keepsake,850)){ctx.fillText(line,540,y);y+=36;}
   ctx.font='22px Georgia';ctx.fillText(value.sender ? `With love, ${value.sender}` : '✧',540,h-80);
 }
-function sync() {if(!result)return;result={title:$('title').value,blessing:$('blessing').value,keepsake:$('keepsake').value,sender:$('signature').value,theme:$('theme').value,script:$('script').value};draw($('canvas'),result);$('linkWrap').hidden=true;}
+function sync() {if(!result)return;result={title:$('title').value,blessing:$('blessing').value,keepsake:$('keepsake').value,sender:$('signature').value,theme:$('theme').value,script:$('script').value};$('scriptQuote').hidden=!result.script;localMedia.syncGuide();draw($('canvas'),result);$('linkWrap').hidden=true;}
 function show(value) {
   localMedia.reset();
   result=value;$('compose').hidden=true;$('recipient').hidden=true;$('result').hidden=false;
   for(const id of ['title','blessing','keepsake','theme','script'])$(id).value=value[id] || '';
   $('signature').value=value.sender || '';$('scriptWrap').hidden=!value.script;
+  $('scriptQuote').hidden=!value.script;
   $('scriptButton').hidden=recipientMode;$('share').hidden=recipientMode;$('back').hidden=recipientMode;
   $('linkWrap').hidden=true;draw($('canvas'),value);$('resultHeading').textContent=recipientMode?'A little light, for you.':'Your little light.';window.scrollTo(0,0);
 }
@@ -82,6 +85,7 @@ $('form').addEventListener('submit',async e=>{
 });
 for(const id of ['title','blessing','keepsake','signature','theme','script'])$(id).addEventListener('input',sync);
 $('scriptButton').onclick=busy('scriptButton',async()=>{if(result.script && !confirm('Replace your current script with a new draft?'))return;$('script').value=await provider.script(input,result,Number($('duration').value));$('scriptWrap').hidden=false;sync();event('script_requested');});
+$('scriptQuote').onclick=()=>{const quote=scriptQuote(result.script);if(!quote){status('Choose a shorter complete sentence for the keepsake line.');return;}$('keepsake').value=quote;sync();status('One spoken sentence is now your keepsake line. Your full message is unchanged.');};
 async function save(wallpaper) {
   const canvas=document.createElement('canvas');draw(canvas,result,wallpaper);
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw new Error(t.error);
@@ -91,7 +95,13 @@ $('cardSave').onclick=busy('cardSave',()=>save(false));$('wallSave').onclick=bus
 $('share').onclick=busy('share',async()=>{const sealed=await seal(result);const gift=await post('/api/share',{payload:sealed.payload});sharedToken=gift.token;$('shareLink').value=`${location.origin}/#gift=${gift.token}&key=${sealed.key}`;$('linkWrap').hidden=false;status(t.linkCreated);});
 $('deleteLink').onclick=busy('deleteLink',async()=>{await post('/api/revoke',{token:sharedToken});$('linkWrap').hidden=true;sharedToken=undefined;status('Shared message deleted. This link no longer works. Saved or externally shared copies are unchanged.');});
 $('copy').onclick=busy('copy',async()=>{await navigator.clipboard.writeText($('shareLink').value);status(t.copied);});
-$('back').onclick=()=>{localMedia.reset();$('compose').hidden=false;$('result').hidden=true;status('');};
+$('back').onclick=()=>{
+  localMedia.reset();$('form').reset();input=undefined;result=undefined;sharedToken=undefined;
+  for(const id of ['title','blessing','keepsake','signature','script','shareLink'])$(id).value='';
+  $('duration').value='15';$('theme').value='dawn';$('scriptWrap').hidden=true;$('scriptQuote').hidden=true;$('linkWrap').hidden=true;
+  document.querySelectorAll('.personalise').forEach(section=>{section.open=false;});
+  $('shareDialog').close();chips();$('compose').hidden=false;$('result').hidden=true;status('');window.scrollTo(0,0);
+};
 const fragment=new URLSearchParams(location.hash.slice(1));
 if(fragment.has('gift')) {
   recipientMode=true;$('compose').hidden=true;$('recipient').hidden=false;

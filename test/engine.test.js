@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {templateProvider,faiths,tones,presets,keywords} from '../public/engine.js';
+import {templateProvider,faiths,tones,presets,keywords,scriptQuote} from '../public/engine.js';
 import {publicCard} from '../public/sharing.js';
 import {seal,unseal} from '../public/crypto.js';
 import {webcrypto} from 'node:crypto';
@@ -15,7 +15,8 @@ test('rejects scope expansion and generates scripts only through explicit method
   await assert.rejects(templateProvider.generate({preset:'wedding',faith:'Universal',tone:'Warm'}));
   const input={preset:'thinking',faith:'Universal',tone:'Minimal'};
   const value=await templateProvider.generate(input);value.blessing='My edited message';
-  assert.match(await templateProvider.script(input,value),/My edited message/);
+  assert.equal(value.script,'');
+  assert.doesNotMatch(await templateProvider.script(input,value),/My edited message/);
 });
 test('encryption roundtrip, wrong key and tampered ciphertext',async()=>{
   const first=await seal({blessing:'Private words',script:'Private script'}),second=await seal({});
@@ -40,10 +41,21 @@ test('keyword defaults, bounds and short scripts without invented personal memor
   assert.match(unknown.blessing,/Sending this thought with love: “violet umbrella”/);
   assert.doesNotMatch(unknown.blessing,/remember|we shared/i);
 });
-test('social card hides private content and never includes a script',()=>{
+test('social card preserves full message and signature, without the long script',()=>{
   const original={title:'Private name',blessing:'Private message',sender:'Private sender',script:'Private script',theme:'dawn',keepsake:'A line'};
-  const safe=publicCard(original,true,'Public title','Reviewed line');
-  assert.equal(safe.blessing,'');assert.equal(safe.sender,'');assert.equal(safe.script,'');assert.equal(safe.title,'Public title');
+  const safe=publicCard(original,'Public title','Reviewed line');
+  assert.equal(safe.blessing,'Private message');assert.equal(safe.sender,'Private sender');assert.equal(safe.script,'');assert.equal(safe.title,'Public title');
   assert.equal(original.blessing,'Private message');
-  assert.equal(publicCard(original,false,'Title','Line').blessing,'Private message');
+  assert.equal(publicCard(original,'Title','Line').blessing,'Private message');
+});
+test('baby spoken draft is conversational, bounded and quotable without changing the formal card',async()=>{
+  const input={preset:'baby',recipient:'Alex',keywords:['tiny toes','peace','joy']};
+  const value=await templateProvider.generate(input), original=value.blessing;
+  for(const seconds of [15,30]){
+    const spoken=await templateProvider.script(input,value,seconds);
+    assert.match(spoken,/I'm so happy for you/);assert.doesNotMatch(spoken,/tiny toes|Sending this thought/);
+    assert.ok(spoken.split(/\s+/).length<=(seconds===15?30:62));
+    assert.equal(scriptQuote(spoken),'“I\'m so happy for you and your growing family.”');
+  }
+  assert.equal(value.blessing,original);assert.equal(scriptQuote('x'.repeat(150)+'.'),'');
 });

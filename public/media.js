@@ -3,16 +3,19 @@ export function recordingType(video) {
   if (typeof MediaRecorder === 'undefined') return '';
   return ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(type => MediaRecorder.isTypeSupported(type) && (!video?.canPlayType || video.canPlayType(type))) || '';
 }
-export function installLocalMedia(getResult) {
+export function installLocalMedia(getResult, prepareScript = async()=>{}) {
   const $ = id => document.getElementById(id);
   let photo, recorder, stream, timer, frame, videoURL, blob, operation = 0, discard = false;
   const message = text => { $('mediaStatus').textContent = text; };
+  function syncGuide() { $('readingGuideText').textContent=getResult()?.script || ''; }
+  function hideGuide() { $('readingGuide').hidden=true; }
   function buttons(active) {
     $('photo').disabled = active; $('animatePhoto').disabled = active || !photo;
     $('recordVideo').disabled = active; $('stopMedia').hidden = !active;
     $('clearPhoto').disabled = active; $('clearVideo').disabled = active; $('saveVideo').disabled = active;
   }
   function revokeVideo() {
+    hideGuide();
     $('localVideo').onerror=null;
     $('localVideo').pause(); $('localVideo').srcObject=null; $('localVideo').removeAttribute('src'); $('localVideo').load();
     if (videoURL) URL.revokeObjectURL(videoURL);
@@ -21,6 +24,7 @@ export function installLocalMedia(getResult) {
   }
   function releaseTracks() { stream?.getTracks().forEach(track => track.stop()); stream = undefined; }
   function stop(cancel = false) {
+    hideGuide();
     discard = cancel; clearTimeout(timer); cancelAnimationFrame(frame);
     if (recorder?.state === 'recording') recorder.stop();
     releaseTracks(); $('motionCanvas').hidden = true; buttons(false);
@@ -50,6 +54,7 @@ export function installLocalMedia(getResult) {
     active.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
     active.onerror = () => { discard = true; stop(true); message('This browser could not create the video. Try another browser.'); };
     active.onstop = () => {
+      hideGuide();
       if (recorder !== active) return;
       recorder = undefined; releaseTracks(); clearTimeout(timer); cancelAnimationFrame(frame); buttons(false); $('motionCanvas').hidden = true;
       if (discard) return;
@@ -91,11 +96,15 @@ export function installLocalMedia(getResult) {
     try {
       const type=recordingType($('localVideo'));
       if (!type || !navigator.mediaDevices?.getUserMedia) throw new Error('Recording is not supported here. Use your phone camera and the script instead.');
+      await prepareScript();
+      if(id!==operation)return;
       buttons(true);message('Waiting for your camera and microphone permission…');
       const capture=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:720},height:{ideal:1280},facingMode:'user'},audio:true});
       if(id!==operation){capture.getTracks().forEach(track=>track.stop());return;}
       begin(capture,type,Number($('duration').value),'Recording your message');
       $('localVideo').srcObject=capture; $('localVideo').muted=true;$('localVideo').hidden=false; await $('localVideo').play();
+      syncGuide();$('readingGuide').hidden=!getResult()?.script;
+      $('localVideo').scrollIntoView?.({block:'start'});
     } catch(error) { stop(true);$('localVideo').srcObject=null;message(error.name==='NotAllowedError'?'Camera access was not allowed. You can still use the script or a photo.':error.message); }
   };
   $('stopMedia').onclick=()=>{operation++;stop(false);};
@@ -107,5 +116,5 @@ export function installLocalMedia(getResult) {
   // Release camera promptly; do not record a hidden tab or keep devices active after leaving.
   document.addEventListener('visibilitychange',()=>{if(document.hidden){operation++;if($('recordVideo').disabled){stop(true);$('localVideo').srcObject=null;message('Recording cancelled because this tab was hidden. Try again when ready.');}}});
   window.addEventListener('pagehide',reset);
-  return {reset};
+  return {reset,syncGuide};
 }

@@ -21,15 +21,17 @@ test('local camera tracks are stopped, including permission resolved after leavi
   Object.defineProperty(globalThis,'navigator',{configurable:true,value:{mediaDevices:{getUserMedia:()=>new Promise(resolve=>{resolveCamera=resolve;})}}});
   try{
     assert.equal(recordingType(),'video/webm');
-    const media=installLocalMedia(()=>({keepsake:'Hello'}));
-    const pending=element('recordVideo').onclick();media.reset();resolveCamera(capture);await pending;
+    const media=installLocalMedia(()=>({keepsake:'Hello',script:'Spoken guide.'}));
+    const pending=element('recordVideo').onclick();await Promise.resolve();media.reset();resolveCamera(capture);await pending;
     assert.equal(stopped,1,'late camera permission must not leave camera on');
-    const next=element('recordVideo').onclick();resolveCamera(capture);await next;
+    const next=element('recordVideo').onclick();await Promise.resolve();resolveCamera(capture);await next;
     assert.equal(element('localVideo').srcObject,capture);
+    assert.equal(element('readingGuide').hidden,false);assert.equal(element('readingGuideText').textContent,'Spoken guide.');
     listeners.pagehide();await Promise.resolve();
     assert.equal(stopped,2,'leaving stops camera and microphone tracks');
     assert.equal(element('localVideo').srcObject,null);
     assert.equal(element('localVideo').hidden,true);
+    assert.equal(element('readingGuide').hidden,true);
   }finally{
     for(const key of ['document','window','MediaRecorder','cancelAnimationFrame'])globalThis[key]=original[key];
     if(original.navigator)Object.defineProperty(globalThis,'navigator',original.navigator);else delete globalThis.navigator;

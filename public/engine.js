@@ -9,6 +9,11 @@ export function keywords(value = '') {
   const values = Array.isArray(value) ? value : value.split(/[,;\n]/);
   return [...new Set(values.map(word => String(word).trim()).filter(Boolean))].slice(0, 5).map(word => word.slice(0, 40));
 }
+export function scriptQuote(script) {
+  const spoken=script.replace(/^Hi[^.!?]*[.!?]\s*/,'');
+  const sentence=spoken.match(/^[\s\S]*?[.!?](?:\s|$)/)?.[0].trim();
+  return sentence && sentence.length<=138 ? `“${sentence}”` : '';
+}
 function personalLine(input) {
   const words = keywords(input.keywords);
   if (!words.length) return '';
@@ -66,16 +71,27 @@ export const templateProvider = {
   },
   async script(input, result, seconds = 15) {
     const greeting = `Hi${input.recipient ? ` ${input.recipient}` : ''}.`;
-    const text = (personalLine(input) || result.blessing.replace(/^Dear [^\n]+,\n\n/, '')).split(/(?<=[.!?])\s+/);
-    // Approximately 2 words/second. Whole sentences only; arbitrary keywords never invent memories.
+    const chosen = keywords(input.keywords).map(word=>word.toLowerCase());
+    const baby = input.preset === 'baby';
+    const thanks = chosen.includes('thank you');
+    const text = baby ? [
+      "I'm so happy for you and your growing family.",
+      "I hope you find little moments to enjoy together as this new chapter begins.",
+      chosen.includes('peace') ? "And when things feel busy, I hope you get some rest and plenty of support." : "You don't have to have everything figured out; I'm cheering you on.",
+      "Sending you and your little one so much love."
+    ] : [
+      thanks ? "I just wanted to say how much I appreciate you." : chosen.includes('miss you') ? "I miss you, and I wanted to send a little love your way." : "You've been on my mind, so I wanted to say hello.",
+      chosen.includes('different cities') ? "Even from another city, I'm thinking of you." : "I hope this brings a little warmth to your day.",
+      chosen.includes('weekend walks') ? "The thought of a weekend walk together makes me smile." : chosen.includes('encouragement') ? "I hope you can be gentle with yourself today; I'm cheering you on." : "I hope we get a chance to catch up soon."
+    ];
+    // Whole, conversational sentences; never turn arbitrary keywords into invented memories.
     const budget = seconds === 30 ? 62 : 30;
     let script = greeting;
     for (const sentence of text) {
       if ((script+' '+sentence).split(/\s+/).length > budget) break;
       script += ' '+sentence;
     }
-    if (script === greeting) script += ' I wanted to send a little love your way today.';
-    if ((script+' '+result.keepsake).split(/\s+/).length <= budget) script += ' '+result.keepsake;
+    if (script === greeting) script += ' Sending a little love your way.';
     return script;
   }
 };

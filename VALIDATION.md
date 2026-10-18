@@ -1,5 +1,12 @@
 # Validation — updated 2026-10-16
 
+## Private-test feedback update — 2026-10-18
+
+- Seven unit checks pass, including conversational baby-shower scripts with 15/30-second word budgets, one-sentence quote extraction, and preservation of the formal card message.
+- Sharing now retains the full message and signature; the earlier redaction behavior below is historical and has been removed from this MVP. The long spoken script is not exported on the card.
+- Browser smoke check: baby-shower scenario, names and three keywords, conversational script beside recording controls, optional quoted keepsake sentence, full-content share preview, then Write another. Verified keywords, recipient, sender and personal detail are empty, selections reset and optional panels close without requiring a save/share first.
+- Simulated camera tests verify the guide uses the spoken script and is hidden when recording ends/leaving. The recorder receives the raw camera stream; no guide text is burned into saved video. Actual camera eye contact and physical-device layout remain user-pilot checks; no real camera was accessed by the tests.
+
 Verified locally using Node 24 and Wrangler 4.151.0:
 
 - All 40 preset × faith × tone combinations; personal detail insertion and unsupported occasion rejection.
