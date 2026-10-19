@@ -18,6 +18,8 @@ The script editor is beside the camera controls. A scrollable reading guide sits
 
 ## Sharing and local media
 
+**Recipients receive a read-only view.** Message text, title, keepsake line, signature and visual theme are displayed as sent, with no editing, script or media-production controls. Save and Share export the received content; recipient share previews do not expose title/line editors and ignore overrides. The sender's composer remains editable. Redeemed content is frozen in app state, and the backend has no gift-update endpoint. This protects the in-app experience; it cannot prevent alteration of a downloaded image in another app.
+
 **Experimental media:** local animation and recording are retained for optional exploration. Real-device playback and destination-app compatibility are not yet verified. The core pilot deliverables are the card and wallpaper.
 
 Both sender and recipient can use **Share card**. A separate preview always includes the full message and signature, using the current card title and keepsake line. There are no hide-content controls in this MVP. Review is explicit before sending personal details to another app. File-only native sharing never sends the private bearer link or long video script. If native sharing is unavailable, Download image works instead. Available apps depend on browser/device/file format; no direct WhatsApp or Instagram posting integration is promised. Expiry/deletion cannot revoke downloaded or externally shared copies.

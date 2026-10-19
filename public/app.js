@@ -11,7 +11,7 @@ let sharedToken;
 const localMedia = installLocalMedia(()=>result,async()=>{
   if(!result.script && input){$('script').value=await provider.script(input,result,Number($('duration').value));$('scriptWrap').hidden=false;sync();event('script_requested');}
 });
-installSharing(()=>result,draw,message=>status(message));
+installSharing(()=>result,draw,message=>status(message),()=>recipientMode);
 const status = message => { $('status').textContent = message; };
 for (const [id, values] of [['faith',faiths],['tone',tones]]) for (const value of values) {const option = new Option(value,value); $(id).add(option);}
 function chips() {
@@ -67,10 +67,18 @@ export function draw(canvas, value, wallpaper=false) {
   for(const line of wrap(ctx,value.keepsake,850)){ctx.fillText(line,540,y);y+=36;}
   ctx.font='22px Georgia';ctx.fillText(value.sender ? `With love, ${value.sender}` : '✧',540,h-80);
 }
-function sync() {if(!result)return;result={title:$('title').value,blessing:$('blessing').value,keepsake:$('keepsake').value,sender:$('signature').value,theme:$('theme').value,script:$('script').value};$('scriptQuote').hidden=!result.script;localMedia.syncGuide();draw($('canvas'),result);$('linkWrap').hidden=true;}
+function sync() {if(!result || recipientMode)return;result={title:$('title').value,blessing:$('blessing').value,keepsake:$('keepsake').value,sender:$('signature').value,theme:$('theme').value,script:$('script').value};$('scriptQuote').hidden=!result.script;localMedia.syncGuide();draw($('canvas'),result);$('linkWrap').hidden=true;}
 function show(value) {
   localMedia.reset();
-  result=value;$('compose').hidden=true;$('recipient').hidden=true;$('result').hidden=false;
+  result=recipientMode?Object.freeze({...value}):value;$('compose').hidden=true;$('recipient').hidden=true;$('result').hidden=false;
+  document.querySelectorAll('#editor > label, #editor > details').forEach(element=>{element.hidden=recipientMode;});
+  $('receivedMessage').hidden=!recipientMode;
+  $('receivedTitle').textContent=value.title;
+  $('receivedBlessing').textContent=value.blessing;
+  $('receivedKeepsake').textContent=value.keepsake;
+  $('receivedSender').textContent=value.sender?`With love, ${value.sender}`:'';
+  $('resultEyebrow').textContent=recipientMode?'A MESSAGE TO KEEP':'WORDS TO MAKE YOUR OWN';
+  $('resultHint').textContent=recipientMode?'Sent with care. Save or share this keepsake just as it was sent.':'Read it aloud. Change a word. Make it feel like you.';
   for(const id of ['title','blessing','keepsake','theme','script'])$(id).value=value[id] || '';
   $('signature').value=value.sender || '';$('scriptWrap').hidden=!value.script;
   $('scriptQuote').hidden=!value.script;

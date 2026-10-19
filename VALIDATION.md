@@ -1,5 +1,11 @@
 # Validation — updated 2026-10-16
 
+## Recipient read-only view — 2026-10-19
+
+Eight automated checks pass, including preservation of original title/message/keepsake/signature in recipient sharing despite attempted title/line overrides. Recipient rendering uses text nodes, hides authoring and production tools, and freezes the received data; sender editing is unchanged. Save and Share remain available. Cloudflare Access's first-login fragment handoff remains a separate limitation: sign in, then reopen the original gift link if the recipient landing screen is lost. No token is consumed by that navigation.
+
+Live Cloudflare smoke test: created and explicitly redeemed a fresh synthetic gift. Recipient view shows the original message and signature with no editing controls; sharing preview also has no editing fields and retains Save/Share actions.
+
 ## Cloudflare backend preparation — 2026-10-19
 
 OAuth connection verified for the owner's selected account. Created D1 database `little-light`, applied migration `0001_initial.sql`, and deployed `little-light-blessings` with its hourly cleanup schedule and asset binding. Seven unit tests passed before deployment. `workers_dev` and `preview_urls` are disabled, with no custom routes configured, until the owner-only Cloudflare Access policy is configured. This is a deployed backend without a publicly reachable test address; hosted recipient-link tests and private-access verification remain pending.

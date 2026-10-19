@@ -1,18 +1,19 @@
-export function publicCard(result, title, line) {
-  return {...result,title,keepsake:line,script:''};
+export function publicCard(result, title, line, readOnly = false) {
+  return {...result,title:readOnly?result.title:title,keepsake:readOnly?result.keepsake:line,script:''};
 }
-export function installSharing(getResult, draw, status) {
+export function installSharing(getResult, draw, status, isReadOnly = ()=>false) {
   const $=id=>document.getElementById(id);let selected, file;
   let revision=0;
   async function preview() {
     const current=++revision;
-    selected=publicCard(getResult(),$('publicTitle').value,$('publicLine').value);
+    selected=publicCard(getResult(),$('publicTitle').value,$('publicLine').value,isReadOnly());
     draw($('sharePreview'),selected);file=undefined;$('sendSocial').disabled=true;
     const blob=await new Promise(resolve=>$('sharePreview').toBlob(resolve,'image/png'));
     if(current!==revision || !blob)return;
     file=new File([blob],'little-light-keepsake.png',{type:'image/png'});$('sendSocial').disabled=false;
   }
   $('socialShare').onclick=()=>{
+    for(const id of ['publicTitle','publicLine']){$(id).readOnly=isReadOnly();$(id).closest('label').hidden=isReadOnly();}
     $('publicTitle').value=getResult().title;$('publicLine').value=getResult().keepsake;
     $('shareDialog').showModal();preview();
   };

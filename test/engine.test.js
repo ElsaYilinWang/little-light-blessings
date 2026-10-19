@@ -48,6 +48,13 @@ test('social card preserves full message and signature, without the long script'
   assert.equal(original.blessing,'Private message');
   assert.equal(publicCard(original,'Title','Line').blessing,'Private message');
 });
+test('recipient sharing cannot override the sender title, keepsake or message',()=>{
+  const gift=Object.freeze({title:'Original title',blessing:'Original message',keepsake:'Original line',sender:'Original sender',theme:'dawn',script:'Spoken draft'});
+  const shared=publicCard(gift,'Changed title','Changed line',true);
+  assert.equal(shared.title,gift.title);assert.equal(shared.keepsake,gift.keepsake);
+  assert.equal(shared.blessing,gift.blessing);assert.equal(shared.sender,gift.sender);assert.equal(shared.script,'');
+  assert.equal(publicCard(gift,'Changed title','Changed line',false).title,'Changed title');
+});
 test('baby spoken draft is conversational, bounded and quotable without changing the formal card',async()=>{
   const input={preset:'baby',recipient:'Alex',keywords:['tiny toes','peace','joy']};
   const value=await templateProvider.generate(input), original=value.blessing;
