@@ -6,7 +6,7 @@ A tiny, privacy-light way to send personalised digital blessings and meaningful 
 
 **Minimum pilot offer:** one personalised message, one card and a matching wallpaper, with one optional founder revision. The first pilot tests sending and saving meaningful keepsakes. Optional media is experimental, is not part of pilot onboarding, and is not a condition of success. No new features are planned until the pilot produces evidence.
 
-Exactly two presets: **New Baby / Baby Shower** and **Thinking of You**. The default flow is occasion → up to five keywords/short phrases → ready-to-send card. Tappable keyword suggestions reduce typing; keywords are optional. Universal + Warm defaults, with names, an editable personal detail, all four faith perspectives and all five tones behind “Personalise.” Editable message, keepsake line, title and visual theme remain available.
+Three moments: **New Baby / Baby Shower**, **Thinking of You**, and **Sending wishes**. The default flow is occasion → up to five keywords/short phrases → ready-to-send card. Tappable keyword suggestions reduce typing; keywords are optional. Universal + Warm defaults, with names, an editable personal detail, all four faith perspectives and all five tones behind “Personalise.” Editable message, keepsake line, title and visual theme remain available.
 
 Optional 15/30-second script drafts are generated **only when requested** in a conversational voice distinct from the formal card, with approximate spoken word budgets. The MVP uses curated phrase mappings and honest quoted fallback for unfamiliar phrases; it does not invent a shared memory from an unknown keyword. No live AI is used. The provider interface remains swappable.
 
@@ -54,7 +54,7 @@ npm run check
 node test/integration.mjs
 ```
 
-The integration check uses real local D1 SQL and concurrent HTTP requests. Repeated integration runs may hit the intended share limit: wait ten minutes or reset local state. Tests cover all 40 preset combinations, deferred scripts, encryption authentication, GET/HEAD safety, origin checks, atomic single redemption, analytics allowlisting and request bounds.
+The integration check uses real local D1 SQL and concurrent HTTP requests. Repeated integration runs may hit the intended share limit: wait ten minutes or reset local state. Tests cover all 60 preset combinations, deferred scripts, encryption authentication, GET/HEAD safety, origin checks, atomic single redemption, analytics allowlisting and request bounds.
 
 ## Deployment
 
@@ -121,3 +121,5 @@ git push -u origin main
 ```
 
 MIT licensed. Templates and code are included under the same license. No third-party media assets.
+
+Six predefined canvas backgrounds: Spring, Summer, Autumn, Winter, Halloween, and Christmas. The sender chooses a theme independently of the moment or faith perspective. Legacy dawn/twilight/sage gift links remain renderable. No image-generation service or extra operating cost is introduced.

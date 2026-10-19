@@ -1,5 +1,14 @@
 // English UI catalog. Copy to zh-ui.js and translate values only.
 export default {
+  "Find the words for a new beginning, someone you miss, or a wish sent with care.": "Find the words for a new beginning, someone you miss, or a wish sent with care.",
+  "Sending wishes": "Sending wishes",
+  "Wish them good things ahead": "Wish them good things ahead",
+  "Spring · soft sage": "Spring · soft sage",
+  "Summer · warm peach": "Summer · warm peach",
+  "Autumn · amber leaves": "Autumn · amber leaves",
+  "Winter · quiet lavender": "Winter · quiet lavender",
+  "Halloween · moonlit pumpkin": "Halloween · moonlit pumpkin",
+  "Christmas · evergreen glow": "Christmas · evergreen glow",
   "Little Light — words that feel like you": "Little Light — words that feel like you",
   "✧ little light": "✧ little light",
   "SMALL WORDS. DEEP FEELING.": "SMALL WORDS. DEEP FEELING.",

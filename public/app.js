@@ -4,6 +4,7 @@ import t from './locales/en.js';
 import {translateUI} from './i18n.js';
 import {installLocalMedia} from './media.js';
 import {installSharing} from './sharing.js';
+import {themes, themeName, paintBackground} from './themes.js';
 translateUI();
 const $ = id => document.getElementById(id);
 let result, input, recipientMode = false;
@@ -14,6 +15,7 @@ const localMedia = installLocalMedia(()=>result,async()=>{
 installSharing(()=>result,draw,message=>status(message),()=>recipientMode);
 const status = message => { $('status').textContent = message; };
 for (const [id, values] of [['faith',faiths],['tone',tones]]) for (const value of values) {const option = new Option(value,value); $(id).add(option);}
+for (const [name,theme] of Object.entries(themes)) $('theme').add(new Option(theme.label,name));
 function chips() {
   const preset=$('form').elements.preset.value, chosen=keywords($('keywords').value);
   $('keywords').placeholder=t.wordExamples[preset];
@@ -35,7 +37,6 @@ async function post(path, data) {
 }
 function event(name) { if (navigator.doNotTrack === '1' || navigator.globalPrivacyControl) return; post('/api/event',{event:name}).catch(()=>{}); }
 function busy(id, fn) { return async () => {const button=$(id); button.disabled=true; status(''); try {await fn();} catch(e) {status(e.message || t.error);} finally {button.disabled=false;}}; }
-const palettes = {dawn:['#f3dfd0','#eee0ed','#514452'],twilight:['#ded8ef','#f1dbe2','#4b425d'],sage:['#dce6d8','#f2e8d7','#414d42']};
 function wrap(ctx, text, width) {
   const lines=[];
   for (const paragraph of text.split('\n')) {
@@ -53,9 +54,7 @@ function wrap(ctx, text, width) {
 }
 export function draw(canvas, value, wallpaper=false) {
   canvas.width=1080;canvas.height=wallpaper?1920:1350;
-  const ctx=canvas.getContext('2d'), h=canvas.height, palette=palettes[value.theme] || palettes.dawn;
-  const gradient=ctx.createLinearGradient(0,0,1080,h);gradient.addColorStop(0,palette[0]);gradient.addColorStop(1,palette[1]);ctx.fillStyle=gradient;ctx.fillRect(0,0,1080,h);
-  ctx.fillStyle='#fff5';ctx.beginPath();ctx.arc(540,wallpaper?350:220,115,0,Math.PI*2);ctx.fill();
+  const ctx=canvas.getContext('2d'), h=canvas.height, palette=paintBackground(ctx,value.theme,h);
   ctx.strokeStyle=palette[2]+'44';ctx.lineWidth=2;ctx.strokeRect(48,48,984,h-96);ctx.textAlign='center';ctx.fillStyle=palette[2];
   let titleSize=52, titleLines; do {ctx.font=`${titleSize}px Georgia`;titleLines=wrap(ctx,value.title,860);titleSize-=2;}while(titleLines.length>3 && titleSize>24);
   let y=wallpaper?560:390;
@@ -80,6 +79,7 @@ function show(value) {
   $('resultEyebrow').textContent=recipientMode?'A MESSAGE TO KEEP':'WORDS TO MAKE YOUR OWN';
   $('resultHint').textContent=recipientMode?'Sent with care. Save or share this keepsake just as it was sent.':'Read it aloud. Change a word. Make it feel like you.';
   for(const id of ['title','blessing','keepsake','theme','script'])$(id).value=value[id] || '';
+  $('theme').value=themeName(value.theme);
   $('signature').value=value.sender || '';$('scriptWrap').hidden=!value.script;
   $('scriptQuote').hidden=!value.script;
   $('scriptButton').hidden=recipientMode;$('share').hidden=recipientMode;$('back').hidden=recipientMode;
@@ -107,7 +107,7 @@ $('copy').onclick=busy('copy',async()=>{await navigator.clipboard.writeText($('s
 $('back').onclick=()=>{
   localMedia.reset();$('form').reset();input=undefined;result=undefined;sharedToken=undefined;
   for(const id of ['title','blessing','keepsake','signature','script','shareLink'])$(id).value='';
-  $('duration').value='15';$('theme').value='dawn';$('scriptWrap').hidden=true;$('scriptQuote').hidden=true;$('linkWrap').hidden=true;
+  $('duration').value='15';$('theme').value='spring';$('scriptWrap').hidden=true;$('scriptQuote').hidden=true;$('linkWrap').hidden=true;
   document.querySelectorAll('.personalise').forEach(section=>{section.open=false;});
   $('shareDialog').close();chips();$('compose').hidden=false;$('result').hidden=true;status('');window.scrollTo(0,0);
 };

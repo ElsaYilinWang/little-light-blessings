@@ -1,4 +1,8 @@
-# Validation — updated 2026-10-16
+# Validation — updated 2026-10-19
+
+## Seasonal themes and wishes — 2026-10-19
+
+Ten automated checks pass, covering all 60 moment/faith/tone combinations, occasion-neutral wishes and short scripts, six theme names and legacy theme aliases, encryption, recipient sharing protection, and camera cleanup. Live private Cloudflare browser check confirms the Sending wishes radio changes suggestions, generates its own title/message/keepsake, and exposes six visual choices. Full-page Halloween and Christmas previews reviewed for message readability. Backgrounds are predefined canvas decorations shared by card, wallpaper, social preview and recipient render paths; no new API or data collection added.
 
 ## Recipient read-only view — 2026-10-19
 

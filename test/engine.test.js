@@ -4,12 +4,32 @@ import {templateProvider,faiths,tones,presets,keywords,scriptQuote} from '../pub
 import {publicCard} from '../public/sharing.js';
 import {seal,unseal} from '../public/crypto.js';
 import {webcrypto} from 'node:crypto';
+import {themes,themeName} from '../public/themes.js';
 if (!globalThis.crypto) Object.defineProperty(globalThis,'crypto',{value:webcrypto});
-test('all 40 preset/faith/tone combinations produce editable, script-free results',async()=>{
+test('all 60 preset/faith/tone combinations produce editable, script-free results',async()=>{
   for(const preset of presets)for(const faith of faiths)for(const tone of tones){
     const value=await templateProvider.generate({preset,faith,tone,recipient:'A & B',detail:'Our weekends together.',sender:'C'});
     assert.match(value.blessing,/Dear A & B/);assert.match(value.blessing,/Our weekends together\./);assert.equal(value.script,'');assert.ok(value.title);assert.ok(value.theme);assert.ok(value.keepsake);
   }
+});
+
+test('wishes stay occasion-neutral and have their own short spoken draft',async()=>{
+  const input={preset:'wishes',keywords:['good health','new chapter']};
+  const value=await templateProvider.generate(input);
+  assert.match(value.blessing,/good health/);assert.match(value.blessing,/new chapter/);
+  assert.doesNotMatch(value.blessing,/little one|miss you|birthday|Christmas|Halloween/i);
+  assert.equal(value.theme,'summer');assert.equal(value.script,'');
+  for(const seconds of [15,30]) {
+    const spoken=await templateProvider.script(input,value,seconds);
+    assert.match(spoken,/good wish/);assert.doesNotMatch(spoken,/growing family|miss you/);
+    assert.ok(spoken.split(/\s+/).length<=(seconds===15?30:62));
+  }
+});
+
+test('six visual themes preserve compatibility with previously shared gifts',()=>{
+  assert.equal(Object.keys(themes).length,6);
+  assert.equal(themeName('dawn'),'summer');assert.equal(themeName('sage'),'spring');assert.equal(themeName('twilight'),'winter');
+  for(const name of Object.keys(themes))assert.equal(themeName(name),name);
 });
 test('rejects scope expansion and generates scripts only through explicit method',async()=>{
   await assert.rejects(templateProvider.generate({preset:'wedding',faith:'Universal',tone:'Warm'}));
