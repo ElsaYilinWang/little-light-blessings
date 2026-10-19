@@ -1,5 +1,9 @@
 # Validation — updated 2026-10-16
 
+## Cloudflare backend preparation — 2026-10-19
+
+OAuth connection verified for the owner's selected account. Created D1 database `little-light`, applied migration `0001_initial.sql`, and deployed `little-light-blessings` with its hourly cleanup schedule and asset binding. Seven unit tests passed before deployment. `workers_dev` and `preview_urls` are disabled, with no custom routes configured, until the owner-only Cloudflare Access policy is configured. This is a deployed backend without a publicly reachable test address; hosted recipient-link tests and private-access verification remain pending.
+
 ## Private-test feedback update — 2026-10-18
 
 - Seven unit checks pass, including conversational baby-shower scripts with 15/30-second word budgets, one-sentence quote extraction, and preservation of the formal card message.

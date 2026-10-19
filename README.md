@@ -56,6 +56,8 @@ The integration check uses real local D1 SQL and concurrent HTTP requests. Repea
 
 ## Deployment
 
+Cloudflare backend first deployed on 2026-10-19 to the owner's account, with the D1 schema applied. Both `workers_dev` and `preview_urls` are deliberately `false` in `wrangler.jsonc`: the Worker has no public address while private test access is being configured. Do not enable an address before configuring and checking an owner-only Cloudflare Access policy. Browser recipient-link tests on Cloudflare remain pending until that gate is available. The private Sites test below remains separate and has no backend.
+
 An owner-private Sites test is configured in `.openai/hosting.json`. Build its static artifact with `node scripts/build-private-preview.mjs`. This separate artifact disables recipient links and server analytics, adds a visible test notice, and retains local card editing, export and optional media. It has no database and does not publish the site to other people. The original Cloudflare app below remains the route to testing recipient links. GitHub stores source code; it is not the website host.
 
 1. Create a free Cloudflare account, then `npx wrangler login`.
@@ -65,7 +67,7 @@ An owner-private Sites test is configured in `.openai/hosting.json`. Build its s
 5. `npm run deploy`. Use the returned HTTPS `workers.dev` URL; a purchased domain is optional.
 6. Verify two concurrent opens, expired links, exports on iOS/Android and local analytics before inviting participants. Do not enable request-body logging, session replay or third-party trackers.
 
-This is a standalone Cloudflare Worker project; it is not registered with Sites hosting. Deployment requires your Cloudflare account and has not been performed by merely committing the project.
+This is a standalone Cloudflare Worker deployment in addition to the owner-private static Sites test. A GitHub push alone does not deploy either version. The checked-in account and database IDs identify the owner's resources; forks must replace them with their own IDs. Secrets are never committed.
 
 ## Privacy and security
 
