@@ -1,7 +1,7 @@
 {
   "name": "little-light-blessings",
   "account_id": "2de18dd78cf1f04ab752e23e7fb96239",
-  "workers_dev": false,
+  "workers_dev": true,
   "preview_urls": false,
   "main": "src/worker.js",
   "compatibility_date": "2026-10-01",

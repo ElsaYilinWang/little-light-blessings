@@ -34,3 +34,7 @@ Limits: no production Cloudflare deployment or real iOS/Android device test; no 
 ## Publication preparation — 2026-10-18
 
 The owner supplied the new `ElsaYilinWang/little-light-blessings` repository. Its remote was checked and had no refs before the initial push. Documentation now prioritises the five-sender card/wallpaper pilot and labels existing media experimental. Six unit tests are rerun before publication. Source publication does not imply Cloudflare deployment, real-device media verification or completed GDPR launch requirements.
+
+## Protected Cloudflare address — 2026-10-19
+
+The owner supplied a saved Worker Access screenshot confirming All traffic and Cloudflare account members (Allow). Enabled workers.dev while keeping preview URLs disabled, then verified cookie-free GET /, GET /app.js and POST /api/share each return 302 to the account’s Cloudflare Access sign-in domain. The live test address is https://little-light-blessings.elsa-yilin-w39.workers.dev . Signed-in app and recipient-link smoke checks remain pending. Only permitted account members can use this test, including recipients.
