@@ -4,7 +4,8 @@ import t from './locales/en.js';
 import {translateUI} from './i18n.js';
 import {installLocalMedia} from './media.js';
 import {installSharing} from './sharing.js';
-import {themes, themeName, paintBackground} from './themes.js';
+import {themes, themeName} from './themes.js';
+import {draw} from './artwork.js';
 translateUI();
 const $ = id => document.getElementById(id);
 let result, input, recipientMode = false;
@@ -37,36 +38,10 @@ async function post(path, data) {
 }
 function event(name) { if (navigator.doNotTrack === '1' || navigator.globalPrivacyControl) return; post('/api/event',{event:name}).catch(()=>{}); }
 function busy(id, fn) { return async () => {const button=$(id); button.disabled=true; status(''); try {await fn();} catch(e) {status(e.message || t.error);} finally {button.disabled=false;}}; }
-function wrap(ctx, text, width) {
-  const lines=[];
-  for (const paragraph of text.split('\n')) {
-    let line='';
-    for (const word of paragraph.split(' ')) {
-      const candidate = line ? line+' '+word : word;
-      if (ctx.measureText(candidate).width <= width) {line=candidate;continue;}
-      if (line) lines.push(line); line='';
-      // Break long names/URLs as well as ordinary words; supports future CJK text.
-      for (const char of word) {if (ctx.measureText(line+char).width > width) {lines.push(line);line='';} line+=char;}
-    }
-    lines.push(line);
-  }
-  return lines;
+function renderPreviews(value) {
+  for(const [id,wallpaper] of [['canvas',false],['wallpaperCanvas',true]])draw($(id),value,wallpaper).catch(error=>status(error.message));
 }
-export function draw(canvas, value, wallpaper=false) {
-  canvas.width=1080;canvas.height=wallpaper?1920:1350;
-  const ctx=canvas.getContext('2d'), h=canvas.height, palette=paintBackground(ctx,value.theme,h);
-  ctx.strokeStyle=palette[2]+'44';ctx.lineWidth=2;ctx.strokeRect(48,48,984,h-96);ctx.textAlign='center';ctx.fillStyle=palette[2];
-  let titleSize=52, titleLines; do {ctx.font=`${titleSize}px Georgia`;titleLines=wrap(ctx,value.title,860);titleSize-=2;}while(titleLines.length>3 && titleSize>24);
-  let y=wallpaper?560:390;
-  for(const line of titleLines){ctx.fillText(line,540,y);y+=titleSize*1.3;} y+=45;
-  const remaining=h-y-270;
-  let size=34, lines;do {ctx.font=`${size}px Georgia`;lines=wrap(ctx,value.blessing,830);if(lines.length*size*1.5<=remaining)break;size-=1;}while(size>12);
-  for(const line of lines){ctx.fillText(line,540,y);y+=size*1.5;}
-  y=h-195;ctx.font='italic 30px Georgia';
-  for(const line of wrap(ctx,value.keepsake,850)){ctx.fillText(line,540,y);y+=36;}
-  ctx.font='22px Georgia';ctx.fillText(value.sender ? `With love, ${value.sender}` : '✧',540,h-80);
-}
-function sync() {if(!result || recipientMode)return;result={title:$('title').value,blessing:$('blessing').value,keepsake:$('keepsake').value,sender:$('signature').value,theme:$('theme').value,script:$('script').value};$('scriptQuote').hidden=!result.script;localMedia.syncGuide();draw($('canvas'),result);$('linkWrap').hidden=true;}
+function sync() {if(!result || recipientMode)return;result={title:$('title').value,blessing:$('blessing').value,keepsake:$('keepsake').value,sender:$('signature').value,theme:$('theme').value,script:$('script').value};$('scriptQuote').hidden=!result.script;localMedia.syncGuide();renderPreviews(result);$('linkWrap').hidden=true;}
 function show(value) {
   localMedia.reset();
   result=recipientMode?Object.freeze({...value}):value;$('compose').hidden=true;$('recipient').hidden=true;$('result').hidden=false;
@@ -83,7 +58,7 @@ function show(value) {
   $('signature').value=value.sender || '';$('scriptWrap').hidden=!value.script;
   $('scriptQuote').hidden=!value.script;
   $('scriptButton').hidden=recipientMode;$('share').hidden=recipientMode;$('back').hidden=recipientMode;
-  $('linkWrap').hidden=true;draw($('canvas'),value);$('resultHeading').textContent=recipientMode?'A little light, for you.':'Your little light.';window.scrollTo(0,0);
+  $('linkWrap').hidden=true;renderPreviews(value);$('resultHeading').textContent=recipientMode?'A little light, for you.':'Your little light.';window.scrollTo(0,0);
 }
 $('form').addEventListener('submit',async e=>{
   e.preventDefault();status('');input=Object.fromEntries(new FormData(e.target));
@@ -96,7 +71,7 @@ for(const id of ['title','blessing','keepsake','signature','theme','script'])$(i
 $('scriptButton').onclick=busy('scriptButton',async()=>{if(result.script && !confirm('Replace your current script with a new draft?'))return;$('script').value=await provider.script(input,result,Number($('duration').value));$('scriptWrap').hidden=false;sync();event('script_requested');});
 $('scriptQuote').onclick=()=>{const quote=scriptQuote(result.script);if(!quote){status('Choose a shorter complete sentence for the keepsake line.');return;}$('keepsake').value=quote;sync();status('One spoken sentence is now your keepsake line. Your full message is unchanged.');};
 async function save(wallpaper) {
-  const canvas=document.createElement('canvas');draw(canvas,result,wallpaper);
+  const canvas=document.createElement('canvas');await draw(canvas,result,wallpaper);
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw new Error(t.error);
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=wallpaper?'little-light-wallpaper.png':'little-light-card.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);event(wallpaper?'wallpaper_saved':'card_saved');status(t.saved);
 }

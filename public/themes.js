@@ -1,11 +1,11 @@
 // Predefined canvas art: no downloads, image-generation fees, or personal data.
 export const themes = {
-  spring: {label:'Spring · soft sage', colors:['#dce6d8','#f2e8d7','#414d42']},
-  summer: {label:'Summer · warm peach', colors:['#f3dfd0','#fff0cd','#514452']},
-  autumn: {label:'Autumn · amber leaves', colors:['#efd8bd','#ead4ca','#593e35']},
-  winter: {label:'Winter · quiet lavender', colors:['#ded8ef','#e7eef4','#4b425d']},
-  halloween: {label:'Halloween · moonlit pumpkin', colors:['#e3d8ef','#f5d9bd','#45334e']},
-  christmas: {label:'Christmas · evergreen glow', colors:['#dce6df','#f4e8d0','#354c40']}
+  spring: {label:'Spring · Morning Garden', colors:['#dce6d8','#f2e8d7','#414d42']},
+  summer: {label:'Summer · Quiet Horizon', colors:['#f3dfd0','#fff0cd','#514452']},
+  autumn: {label:'Autumn · Autumn Glow', colors:['#efd8bd','#ead4ca','#593e35']},
+  winter: {label:'Winter · Moonlit Calm', colors:['#ded8ef','#e7eef4','#4b425d']},
+  halloween: {label:'Halloween · Boo Night', colors:['#e3d8ef','#f5d9bd','#45334e']},
+  christmas: {label:'Christmas · Santa & Lights', colors:['#dce6df','#f4e8d0','#354c40']}
 };
 export function themeName(name) {
   return ({dawn:'summer',twilight:'winter',sage:'spring'})[name] || (themes[name] ? name : 'spring');

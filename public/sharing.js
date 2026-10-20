@@ -7,10 +7,12 @@ export function installSharing(getResult, draw, status, isReadOnly = ()=>false) 
   async function preview() {
     const current=++revision;
     selected=publicCard(getResult(),$('publicTitle').value,$('publicLine').value,isReadOnly());
-    draw($('sharePreview'),selected);file=undefined;$('sendSocial').disabled=true;
+    file=undefined;$('sendSocial').disabled=true;$('downloadSocial').disabled=true;
+    try {await draw($('sharePreview'),selected);}catch(error){if(current===revision)status(error.message);return;}
+    if(current!==revision)return;
     const blob=await new Promise(resolve=>$('sharePreview').toBlob(resolve,'image/png'));
     if(current!==revision || !blob)return;
-    file=new File([blob],'little-light-keepsake.png',{type:'image/png'});$('sendSocial').disabled=false;
+    file=new File([blob],'little-light-keepsake.png',{type:'image/png'});$('sendSocial').disabled=false;$('downloadSocial').disabled=false;
   }
   $('socialShare').onclick=()=>{
     for(const id of ['publicTitle','publicLine']){$(id).readOnly=isReadOnly();$(id).closest('label').hidden=isReadOnly();}

@@ -1,4 +1,9 @@
-# Validation — updated 2026-10-19
+# Validation — updated 2026-10-20
+
+## Fixed cards and wallpapers — 20 October 2026
+
+Thirteen automated checks cover title balance, wallpaper line breaks and content separation, full message/signature preservation, refusal to silently truncate excessive text, all 60 message combinations, encryption and read-only recipient sharing. Six generated backgrounds are locally served WebP assets. Local browser review confirms holiday panel and signature clarity plus a separate short-line wallpaper preview. Saved-export and live recipient checks recorded below after deployment.
+
 
 ## Seasonal themes and wishes — 2026-10-19
 
@@ -48,3 +53,5 @@ The owner supplied the new `ElsaYilinWang/little-light-blessings` repository. It
 ## Protected Cloudflare address — 2026-10-19
 
 The owner supplied a saved Worker Access screenshot confirming All traffic and Cloudflare account members (Allow). Enabled workers.dev while keeping preview URLs disabled, then verified cookie-free GET /, GET /app.js and POST /api/share each return 302 to the account’s Cloudflare Access sign-in domain. The live test address is https://little-light-blessings.elsa-yilin-w39.workers.dev . Signed-in app and recipient-link smoke checks remain pending. Only permitted account members can use this test, including recipients.
+
+Live Cloudflare verification: created and explicitly redeemed a synthetic Christmas gift. Recipient remains read-only with Save card, Save wallpaper and Share card; social dialog has no editing controls. Both PNG downloads completed and were visually inspected: card retains full message, keepsake and signature on cream panel; wallpaper is 1080×1920 with only the keepsake line. Access policy unchanged. Deployment ddfb1b42-3b6e-4a2a-a7d6-0837868555fe.

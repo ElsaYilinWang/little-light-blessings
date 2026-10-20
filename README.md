@@ -123,3 +123,9 @@ git push -u origin main
 MIT licensed. Templates and code are included under the same license. No third-party media assets.
 
 Six predefined canvas backgrounds: Spring, Summer, Autumn, Winter, Halloween, and Christmas. The sender chooses a theme independently of the moment or faith perspective. Legacy dawn/twilight/sage gift links remain renderable. No image-generation service or extra operating cost is introduced.
+
+## Fixed keepsake formats — 20 October 2026
+
+Cards always render the full edited message, keepsake line and supplied signature. Seasonal cards use a 4:5 crop; holiday cards use portrait framing and translucent cream panels. Wallpapers are 1080×1920 artwork with only the short keepsake line, leaving the upper area free for the phone clock. No hide-message, hide-signature or text-free switches are offered. Wallpaper preview is available to senders and read-only recipients. Same-origin WebP assets are reused for previews and PNG exports; no image API runs per user. Exports wait for the image to load. Unreadably long copy produces an explicit shortening error rather than a silently truncated export. Legacy theme names still resolve. Existing links and encryption semantics are unchanged.
+
+Artwork in public/art was generated with the built-in image tool and adapted from the approved seasonal review. These reusable assets are distributed with this project under its MIT licence; no third-party stock artwork was imported. Prompt direction: soft oil-paint texture and atmospheric light, quiet central space; spring blossoms, summer sea, autumn maple, winter moonlight; Halloween witch/ghost/Boo/bats/haunted house/pumpkins; Christmas Santa/reindeer/gifts/stockings/tree/lights. Artwork is not scripture and faith does not select religious imagery.
