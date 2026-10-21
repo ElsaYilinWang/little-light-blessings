@@ -1,5 +1,6 @@
 import {themeName} from './themes.js';
 export const artwork = {
+  awaiting:'/art/awaiting.webp', newborn:'/art/newborn.webp',
   spring:'/art/spring.webp', summer:'/art/summer.webp', autumn:'/art/autumn.webp',
   winter:'/art/winter.webp', halloween:'/art/halloween.webp', christmas:'/art/christmas.webp'
 };
@@ -61,7 +62,8 @@ export async function draw(canvas,value,wallpaper=false) {
   const name=themeName(value.theme),image=await load(name);
   if(revisions.get(canvas)!==revision)return false;
   const holiday=['halloween','christmas'].includes(name);
-  canvas.width=1080;canvas.height=wallpaper||holiday?1920:1350;
+  const baby=['awaiting','newborn'].includes(name);
+  canvas.width=1080;canvas.height=wallpaper||holiday||baby?1920:1350;
   const ctx=canvas.getContext('2d'),h=canvas.height;
   const scale=Math.max(1080/image.width,h/image.height);
   ctx.drawImage(image,(1080-image.width*scale)/2,(h-image.height*scale)/2,image.width*scale,image.height*scale);
@@ -75,7 +77,7 @@ export async function draw(canvas,value,wallpaper=false) {
     return true;
   }
   const left=holiday?200:100,width=1080-left*2,top=holiday?510:115;
-  const bottom=holiday?1320:1145;
+  const bottom=baby?1000:holiday?1320:1145;
   if(holiday){ctx.fillStyle='rgba(255,250,240,0.88)';ctx.beginPath();ctx.roundRect(left-36,top-38,width+72,bottom-top+76,24);ctx.fill();}
   ctx.fillStyle='#292333';
   let size=58,heading;

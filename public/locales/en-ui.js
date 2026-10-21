@@ -1,5 +1,7 @@
 // English UI catalog. Copy to zh-ui.js and translate values only.
 export default {
+  'Baby · Awaiting You (before birth)':'Baby · Awaiting You (before birth)',
+  'Baby · Welcome, Little One (0–3 months)':'Baby · Welcome, Little One (0–3 months)',
   'Preview wallpaper':'Preview wallpaper',
   'Card: full message and signature. Wallpaper: artwork and keepsake line.':'Card: full message and signature. Wallpaper: artwork and keepsake line.',
   "Find the words for a new beginning, someone you miss, or a wish sent with care.": "Find the words for a new beginning, someone you miss, or a wish sent with care.",

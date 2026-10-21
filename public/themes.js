@@ -1,5 +1,7 @@
 // Predefined canvas art: no downloads, image-generation fees, or personal data.
 export const themes = {
+  awaiting: {label:'Baby · Awaiting You (before birth)', colors:['#faf2e2','#f0dfc4','#493b30']},
+  newborn: {label:'Baby · Welcome, Little One (0–3 months)', colors:['#faf2e2','#e3e4cc','#493b30']},
   spring: {label:'Spring · Morning Garden', colors:['#dce6d8','#f2e8d7','#414d42']},
   summer: {label:'Summer · Quiet Horizon', colors:['#f3dfd0','#fff0cd','#514452']},
   autumn: {label:'Autumn · Autumn Glow', colors:['#efd8bd','#ead4ca','#593e35']},

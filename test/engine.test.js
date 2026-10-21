@@ -26,8 +26,8 @@ test('wishes stay occasion-neutral and have their own short spoken draft',async(
   }
 });
 
-test('six visual themes preserve compatibility with previously shared gifts',()=>{
-  assert.equal(Object.keys(themes).length,6);
+test('eight visual themes preserve compatibility with previously shared gifts',()=>{
+  assert.equal(Object.keys(themes).length,8);
   assert.equal(themeName('dawn'),'summer');assert.equal(themeName('sage'),'spring');assert.equal(themeName('twilight'),'winter');
   for(const name of Object.keys(themes))assert.equal(themeName(name),name);
 });
