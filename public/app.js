@@ -9,7 +9,7 @@ import {draw} from './artwork.js';
 translateUI();
 const $ = id => document.getElementById(id);
 let result, input, recipientMode = false;
-let sharedToken;
+let sharedToken,invitationActive=false,pendingDelivery;
 const localMedia = installLocalMedia(()=>result,async()=>{
   if(!result.script && input){$('script').value=await provider.script(input,result,Number($('duration').value));$('scriptWrap').hidden=false;sync();event('script_requested');}
 });
@@ -34,8 +34,18 @@ for(const radio of $('form').elements.preset)radio.addEventListener('change',()=
 chips();
 async function post(path, data) {
   const response = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-  const value = await response.json(); if (!response.ok) throw new Error(value.error || t.error); return value;
+  const value = await response.json(); if (!response.ok) {if(response.status===401 && !recipientMode)showInvitation();throw new Error(value.error || t.error);} return value;
 }
+function showInvitation(){localMedia.reset();invitationActive=false;$('invitation').hidden=false;$('creditBar').hidden=true;$('compose').hidden=true;$('result').hidden=true;}
+function updateCredits(value){$('creditBalance').textContent=`${value.remaining} gift-link credit${value.remaining===1?'':'s'} remaining`;}
+function unlock(value){invitationActive=true;updateCredits(value);$('invitation').hidden=true;$('creditBar').hidden=false;if(result)show(result);else $('compose').hidden=false;}
+$('inviteForm').onsubmit=async e=>{
+  e.preventDefault();$('inviteSubmit').disabled=true;$('inviteStatus').textContent='Checking your invitation…';
+  try{const value=await post('/api/invite',{code:$('inviteCode').value});$('inviteCode').value='';$('inviteStatus').textContent='';unlock(value);}
+  catch(error){$('inviteStatus').textContent=error.message;}
+  finally{$('inviteSubmit').disabled=false;}
+};
+$('switchInvite').onclick=busy('switchInvite',async()=>{await post('/api/logout',{});localMedia.reset();pendingDelivery=undefined;showInvitation();$('inviteCode').focus();});
 function event(name) { if (navigator.doNotTrack === '1' || navigator.globalPrivacyControl) return; post('/api/event',{event:name}).catch(()=>{}); }
 function busy(id, fn) { return async () => {const button=$(id); button.disabled=true; status(''); try {await fn();} catch(e) {status(e.message || t.error);} finally {button.disabled=false;}}; }
 function renderPreviews(value) {
@@ -61,7 +71,7 @@ function show(value) {
   $('linkWrap').hidden=true;renderPreviews(value);$('resultHeading').textContent=recipientMode?'A little light, for you.':'Your little light.';window.scrollTo(0,0);
 }
 $('form').addEventListener('submit',async e=>{
-  e.preventDefault();status('');input=Object.fromEntries(new FormData(e.target));
+  e.preventDefault();if(!invitationActive){showInvitation();return;}status('');input=Object.fromEntries(new FormData(e.target));
   const raw=input.keywords.split(/[,;\n]/).map(word=>word.trim()).filter(Boolean);
   if(raw.length>5 || raw.some(word=>word.length>40)){status('Use up to five short phrases, with no more than 40 characters each.');return;}
   input.keywords=keywords(raw);
@@ -76,7 +86,14 @@ async function save(wallpaper) {
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=wallpaper?'little-light-wallpaper.png':'little-light-card.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);event(wallpaper?'wallpaper_saved':'card_saved');status(t.saved);
 }
 $('cardSave').onclick=busy('cardSave',()=>save(false));$('wallSave').onclick=busy('wallSave',()=>save(true));
-$('share').onclick=busy('share',async()=>{const sealed=await seal(result);const gift=await post('/api/share',{payload:sealed.payload});sharedToken=gift.token;$('shareLink').value=`${location.origin}/#gift=${gift.token}&key=${sealed.key}`;$('linkWrap').hidden=false;status(t.linkCreated);});
+$('share').onclick=busy('share',async()=>{
+  const snapshot=JSON.stringify(result);
+  if(!pendingDelivery || pendingDelivery.snapshot!==snapshot)pendingDelivery={snapshot,sealed:await seal(result),requestId:[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,'0')).join('')};
+  const delivery=pendingDelivery;
+  const gift=await post('/api/share',{payload:delivery.sealed.payload,requestId:delivery.requestId});updateCredits(gift);pendingDelivery=undefined;
+  if(gift.alreadyOpened){status('The previous link was already opened or deleted. Press Create recipient link again to make a new gift with one credit.');return;}
+  sharedToken=gift.token;$('shareLink').value=`${location.origin}/#gift=${gift.token}&key=${delivery.sealed.key}`;$('linkWrap').hidden=false;status('Private link ready. One gift-link credit used. Copying or sharing this link again does not use another credit.');
+});
 $('deleteLink').onclick=busy('deleteLink',async()=>{await post('/api/revoke',{token:sharedToken});$('linkWrap').hidden=true;sharedToken=undefined;status('Shared message deleted. This link no longer works. Saved or externally shared copies are unchanged.');});
 $('copy').onclick=busy('copy',async()=>{await navigator.clipboard.writeText($('shareLink').value);status(t.copied);});
 $('sendPrivateLink').onclick=async()=>{
@@ -86,7 +103,7 @@ $('sendPrivateLink').onclick=async()=>{
   catch(error){if(error.name!=='AbortError')status('Use Copy private link, then paste it into a direct message.');}
 };
 $('back').onclick=()=>{
-  localMedia.reset();$('form').reset();input=undefined;result=undefined;sharedToken=undefined;
+  localMedia.reset();$('form').reset();input=undefined;result=undefined;sharedToken=undefined;pendingDelivery=undefined;
   for(const id of ['title','blessing','keepsake','signature','script','shareLink'])$(id).value='';
   $('duration').value='15';$('theme').value='spring';$('scriptWrap').hidden=true;$('scriptQuote').hidden=true;$('linkWrap').hidden=true;
   document.querySelectorAll('.personalise').forEach(section=>{section.open=false;});
@@ -94,7 +111,7 @@ $('back').onclick=()=>{
 };
 const fragment=new URLSearchParams(location.hash.slice(1));
 if(fragment.has('gift')) {
-  recipientMode=true;$('compose').hidden=true;$('recipient').hidden=false;
+  recipientMode=true;$('invitation').hidden=true;$('creditBar').hidden=true;$('compose').hidden=true;$('recipient').hidden=false;
   const token=fragment.get('gift'),key=fragment.get('key');
   // Remove credentials from the visible address/history immediately, retaining only in memory.
   history.replaceState(null,'',location.pathname);
@@ -109,4 +126,7 @@ if(fragment.has('gift')) {
     try {show(await unseal(gift.payload,key));status(t.opened);}catch {throw new Error('This message could not be decrypted. The link has been consumed; ask the sender for a new link.');}
     $('redeem').disabled=true;
   });
+} else {
+  showInvitation();$('inviteSubmit').disabled=true;
+  post('/api/session',{}).then(value=>{if(value.active)unlock(value);else {$('inviteStatus').textContent='';event('invite_landing');}}).catch(()=>{$('inviteStatus').textContent='Enter your invitation code to continue.';}).finally(()=>{$('inviteSubmit').disabled=false;});
 }

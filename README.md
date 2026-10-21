@@ -135,3 +135,38 @@ Two additional approved baby designs are available in Visual theme: Awaiting You
 ## Sharing apps — 21 October 2026
 
 Share card includes locally rendered WhatsApp, Instagram, Facebook, TikTok and WeChat icons. Each opens the standard device file-share menu, where the user chooses the available app; a web page cannot force a particular target. When file sharing is unsupported, it requests a PNG download and explains how to attach it manually. No third-party SDK, widgets, external icon URLs or tracking requests are added. App availability and posting support vary; these are not direct platform integrations. Share private link separately uses the device URL-share menu; Copy private link remains available. One-use gifts should be sent directly to one person; use images for group/public sharing. No automatic social posting occurs.
+
+## Invitation-credit pilot — 21 October 2026
+
+The creator is now invitation-only at the application layer. Cloudflare sign-in can be removed only after this version is deployed and verified. The landing page is public; entering a valid code creates a Secure, HttpOnly, SameSite=Strict functional cookie lasting at most seven days or the invitation expiry, whichever comes first. This is access control, not an account or an analytics identifier. Codes use 96 random bits, are normalized without spaces/hyphens, and only their SHA-256 hashes are stored. Do not use short human-chosen codes such as 123456. Source code and public artwork are not confidential: hiding the form is a UX gate; the server enforces gift-link creation permission and credits.
+
+Each pilot code has three gift-link credits. Checking a code, drafting, editing, scripts, downloads, image sharing and recipient opening do not spend a credit. Only successful gift creation spends one. Copying an existing link is free; creating another link deliberately costs another credit. Deleting an existing gift does not refund it. A D1 trigger makes gift insertion, credit deduction, retry receipt and aggregate spend metrics atomic. A random client request ID and stable server-derived gift token allow retries without double charge, including after a response was lost; receipts never resurrect opened/deleted content. Receipts store ciphertext hashes, not plaintext or encryption keys, and expire with gifts. Existing gifts created before invitations still open normally.
+
+Invitation expiry/revocation blocks new creator requests. Zero-credit codes still unlock drafting and downloads. Anyone who holds a code can spend its remaining credits; codes are not bound to a named person, and losing a code has no automatic account recovery. Recipients bypass the invitation page and never use creator credits. Gift encryption, seven-day expiry, explicit POST redemption, origin checks, rate limiting and read-only receiving remain in force. Invite attempts are limited to ten per ten-minute salted network bucket; other API/share limits still apply. Turnstile remains an optional hook, not an enabled defence. Do not treat noindex as a security control.
+
+### Owner operations
+
+Use Node 22+ (Node 24 for SQLite-based tests), authenticated Wrangler and the same project. There is no public administration endpoint. Apply both migrations before running the updated Worker:
+
+    npx wrangler d1 migrations apply little-light --local
+    npx wrangler d1 migrations apply little-light --remote
+    node scripts/invitations.mjs issue --count 5 --credits 3 --days 30 --remote
+    node scripts/invitations.mjs list --remote
+    node scripts/invitations.mjs revoke ADMIN_HASH --remote
+    node scripts/invitations.mjs stats --remote
+
+The issue command prints only a file path; raw codes go into an ignored .local-private Markdown file. Never put these files, codes or functional cookies in GitHub, screenshots, analytics or public pages. Admin hashes needed to revoke codes are in that private file. Send one code per tester in a private message. Expiry and three credits are defaults for the pilot, not a pricing commitment. Owner CLI uses the Cloudflare account; customers never need one.
+
+### Metrics and privacy
+
+Daily aggregates now include invite_landing (browser; respects DNT/GPC), invite_accepted, invite_rejected, credit_spent, credit_blocked, share_created and redeemed, plus the existing creation/save/script events. Server-only spend and link metrics cannot be submitted by a client. Operational tables hold invitation/session hashes, remaining credits and retry receipts solely to enforce access/usage. Do not join operational hashes to behavioural events. No names, emails, faith choice, text, raw codes, tokens or encryption keys go into metrics. Accepted-code counts measure successful sessions, not unique people or unique codes; download/share clicks are not proof of delivery or retention. The browser must send only an allowlisted event name, with no extra properties. Metrics retained 90 days; session and receipt cleanup is scheduled hourly. Invitation records expire operationally and are retained for owner balance/revocation checks; no recovery identity is collected.
+
+Self-directed use needs no extra feature: edit Sending wishes for yourself and save a card or wallpaper, without creating a link or spending a credit. Earlier intention-wallpaper ideas remain research rather than a new product branch. Business-client personalization, bulk sending and payments remain outside this pilot. The old Sites-only static preview is historical and does not enforce the current server credits; validate using the Worker version.
+
+### Verification
+
+    node --test test/*.test.js
+    npx wrangler dev --port 8788
+    node test/integration.mjs
+
+The SQLite tests use actual migrations/triggers and cover concurrent final-credit spending, free retries, receipt safety, exhausted codes, revoked/expired invitations, cookies, strict metrics and rate limiting. The integration check uses the real local Worker/D1 over HTTP and synthetic data only.

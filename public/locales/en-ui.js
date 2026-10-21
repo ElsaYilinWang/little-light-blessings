@@ -1,5 +1,12 @@
 // English UI catalog. Copy to zh-ui.js and translate values only.
 export default {
+  'A LITTLE INVITATION':'A LITTLE INVITATION',
+  'Something meaningful':'Something meaningful',
+  'starts here.':'starts here.',
+  'Your invitation code':'Your invitation code',
+  'Open Little Light':'Open Little Light',
+  'Use another code':'Use another code',
+  'Create a keepsake for someone you care about — or a little encouragement for yourself.':'Create a keepsake for someone you care about — or a little encouragement for yourself.',
   'Baby · Awaiting You (before birth)':'Baby · Awaiting You (before birth)',
   'Baby · Welcome, Little One (0–3 months)':'Baby · Welcome, Little One (0–3 months)',
   'Preview wallpaper':'Preview wallpaper',
