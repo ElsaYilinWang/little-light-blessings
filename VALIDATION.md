@@ -58,3 +58,5 @@ Live Cloudflare verification: created and explicitly redeemed a synthetic Christ
 
 21 October 2026: added the two approved baby designs as same-origin compressed WebP assets; eight themes total. All thirteen regression checks pass, including legacy aliases and fixed output formats. No pet-voice feature added in this change.
 Live browser check passed for both new themes: readable full card text/signature above the nursery illustration and short-line wallpaper preview. Deployment c23305fb-c587-45de-8676-5f355d6a0031.
+
+21 October sharing controls: fourteen automated checks pass, including local SVG-only platform controls and no embedded external resources. Local browser verified five labelled icons, the intact full-card preview, app-picker guidance and direct-link sharing controls. No real social message was sent during testing. Cloudflare access change remains a separate user choice; existing All traffic account-member restriction is still applied.

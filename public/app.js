@@ -79,6 +79,12 @@ $('cardSave').onclick=busy('cardSave',()=>save(false));$('wallSave').onclick=bus
 $('share').onclick=busy('share',async()=>{const sealed=await seal(result);const gift=await post('/api/share',{payload:sealed.payload});sharedToken=gift.token;$('shareLink').value=`${location.origin}/#gift=${gift.token}&key=${sealed.key}`;$('linkWrap').hidden=false;status(t.linkCreated);});
 $('deleteLink').onclick=busy('deleteLink',async()=>{await post('/api/revoke',{token:sharedToken});$('linkWrap').hidden=true;sharedToken=undefined;status('Shared message deleted. This link no longer works. Saved or externally shared copies are unchanged.');});
 $('copy').onclick=busy('copy',async()=>{await navigator.clipboard.writeText($('shareLink').value);status(t.copied);});
+$('sendPrivateLink').onclick=async()=>{
+  const url=$('shareLink').value;if(!url)return;
+  if(!navigator.share){status('Use Copy private link, then paste it into a direct message.');return;}
+  try {await navigator.share({title:'A little light, for you',text:'I made you a little keepsake. Open this private link once, then save the card.',url});}
+  catch(error){if(error.name!=='AbortError')status('Use Copy private link, then paste it into a direct message.');}
+};
 $('back').onclick=()=>{
   localMedia.reset();$('form').reset();input=undefined;result=undefined;sharedToken=undefined;
   for(const id of ['title','blessing','keepsake','signature','script','shareLink'])$(id).value='';
