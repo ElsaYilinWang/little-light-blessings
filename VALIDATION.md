@@ -68,3 +68,7 @@ Final access switch, owner approved 21 October 2026: removed Worker-specific Clo
 
 22 October 2026: twenty checks pass including case-insensitive short-code authentication, unchanged credit spending and the five-per-hour entry limit. Landing copy condensed, Georgia used consistently, privacy disclosure retained in footer. Five fresh short pilot codes receive three credits and seven-day expiry; original long codes are not invalidated.
 Live browser verification: new invitation page uses the single local serif font and lean copy; a lowercase two-character test code unlocked the creator with the correct one-credit balance, without using a credit. Disposable smoke code revoked; five friend codes are unused, three credits each, seven-day expiry. Deployment 8b839431-8d6a-4a5b-928e-56a6261b20d9.
+
+
+## 22 October: newborn artwork
+The 0–3 months theme now uses an awake, smiling infant with warm daylight and gentle movement. The illustration was edited once using image generation; there is no per-user generation or photo upload. The existing blank text area and card/wallpaper layouts are retained. Original artwork is retained for rollback. Invitation-to-friend notes remain in the ignored local private folder, outside application data and metrics.

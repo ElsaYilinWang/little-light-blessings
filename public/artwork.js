@@ -1,6 +1,6 @@
 import {themeName} from './themes.js';
 export const artwork = {
-  awaiting:'/art/awaiting.webp', newborn:'/art/newborn.webp',
+  awaiting:'/art/awaiting.webp', newborn:'/art/newborn-smiling.webp',
   spring:'/art/spring.webp', summer:'/art/summer.webp', autumn:'/art/autumn.webp',
   winter:'/art/winter.webp', halloween:'/art/halloween.webp', christmas:'/art/christmas.webp'
 };
