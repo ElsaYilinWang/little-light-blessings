@@ -2,6 +2,7 @@ const encoder=new TextEncoder();
 export function normalizeCode(code) {
   return typeof code==='string'?code.trim().toUpperCase().replace(/[\s-]/g,''):'';
 }
+export function validCodeFormat(code){return /^(?:[A-Z][0-9]|LL[A-F0-9]{24})$/.test(code);}
 export function sessionCookie(token,seconds=7*86400) {
   return `__Host-ll_invite=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${seconds}`;
 }

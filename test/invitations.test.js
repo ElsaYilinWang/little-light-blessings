@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import {api,digest} from '../src/worker.js';
-import {normalizeCode,giftToken} from '../src/invitations.js';
+import {normalizeCode,validCodeFormat,giftToken} from '../src/invitations.js';
 import {seal} from '../public/crypto.js';
 const origin='https://example.test',code='LL-ABCD-1234-ABCD-1234-ABCD-1234';
 async function setup(credits=3){
@@ -70,8 +70,17 @@ test('revocation, invitation expiry and session expiry block further spending; f
 });
 test('invitation guessing is rate limited; gift tokens are deterministic only within a delivery request',async()=>{
   const x=await setup();let status;
-  for(let i=0;i<11;i++)status=(await x.post('/api/invite',{code:'123456'})).status;
+  for(let i=0;i<6;i++){status=(await x.post('/api/invite',{code:'123456'})).status;if(i<5)assert.equal(status,403);}
   assert.equal(status,429);
   const a=await giftToken('secret','invite','a'),b=await giftToken('secret','invite','a'),c=await giftToken('secret','invite','b');
   assert.match(a,/^[a-f0-9]{64}$/);assert.equal(a,b);assert.notEqual(a,c);
+});
+test('short pilot codes normalize case and retain server-side credit enforcement',async()=>{
+  assert.equal(normalizeCode(' b4 '),'B4');assert.ok(validCodeFormat('B4'));
+  assert.equal(validCodeFormat('44'),false);assert.equal(validCodeFormat('BB'),false);
+  const x=await setup();const hash=await digest('B4');
+  x.db.prepare('UPDATE invitations SET code_hash=?').run(hash);
+  assert.equal((await x.post('/api/invite',{code:'b4'})).status,200);assert.equal(x.balance(),3);
+  const payload=(await seal({title:'Short invite test'})).payload;
+  assert.equal((await (await x.post('/api/share',{payload,requestId:'e'.repeat(32)})).json()).remaining,2);
 });

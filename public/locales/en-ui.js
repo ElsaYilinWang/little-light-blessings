@@ -1,5 +1,14 @@
 // English UI catalog. Copy to zh-ui.js and translate values only.
 export default {
+  "YOU'RE INVITED":"YOU'RE INVITED",
+  'A little light,':'A little light,',
+  'just for you.':'just for you.',
+  'Make someone feel remembered.':'Make someone feel remembered.',
+  'Your code':'Your code',
+  'Come in':'Come in',
+  'Draft & save freely. Gift links use a credit.':'Draft & save freely. Gift links use a credit.',
+  'A few words. A little care. Something worth keeping.':'A few words. A little care. Something worth keeping.',
+  'Made personal. Ready to keep.':'Made personal. Ready to keep.',
   'A LITTLE INVITATION':'A LITTLE INVITATION',
   'Something meaningful':'Something meaningful',
   'starts here.':'starts here.',

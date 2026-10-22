@@ -1,4 +1,4 @@
-import {normalizeCode,sessionCookie,invitationSession,giftToken} from './invitations.js';
+import {normalizeCode,validCodeFormat,sessionCookie,invitationSession,giftToken} from './invitations.js';
 const EVENTS = new Set(['invite_landing','created', 'script_requested', 'card_saved', 'wallpaper_saved']);
 const encoder = new TextEncoder();
 export async function digest(value) { return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(value))), b => b.toString(16).padStart(2, '0')).join(''); }
@@ -17,10 +17,10 @@ async function count(env, event) {
 }
 async function rate(request, env, action, now) {
   if (!env.RATE_SALT) return false; // fail closed until configured
-  const window = Math.floor(now / 600);
+  const window = Math.floor(now / (action==='invite'?3600:600));
   const bucket = await digest(`${env.RATE_SALT}:${window}:${request.headers.get('CF-Connecting-IP') || 'local'}:${action}`);
-  const row = await env.DB.prepare('INSERT INTO limits(bucket,count,expires_at) VALUES(?,1,?) ON CONFLICT(bucket) DO UPDATE SET count=count+1 RETURNING count').bind(bucket, now + 1200).first();
-  return row.count <= (['share','invite'].includes(action) ? 10 : 60);
+  const row = await env.DB.prepare('INSERT INTO limits(bucket,count,expires_at) VALUES(?,1,?) ON CONFLICT(bucket) DO UPDATE SET count=count+1 RETURNING count').bind(bucket, now + (action==='invite'?7200:1200)).first();
+  return row.count <= (action==='invite'?5:action==='share'?10:60);
 }
 export async function api(request, env) {
   const url = new URL(request.url), path = url.pathname;
@@ -34,7 +34,7 @@ export async function api(request, env) {
   const data = await body(request);
   if(path==='/api/invite'){
     const code=normalizeCode(data.code);
-    const invite=/^LL[A-F0-9]{24}$/.test(code)?await env.DB.prepare('SELECT code_hash,credits_remaining,expires_at FROM invitations WHERE code_hash=? AND expires_at>? AND revoked=0').bind(await digest(code),now).first():null;
+    const invite=validCodeFormat(code)?await env.DB.prepare('SELECT code_hash,credits_remaining,expires_at FROM invitations WHERE code_hash=? AND expires_at>? AND revoked=0').bind(await digest(code),now).first():null;
     if(!invite){await count(env,'invite_rejected').catch(()=>{});return json({error:'This invitation is invalid, expired or no longer available.'},403);}
     const token=randomToken(),seconds=Math.min(7*86400,invite.expires_at-now);
     await env.DB.prepare('INSERT INTO invite_sessions VALUES(?,?,?)').bind(await digest(token),invite.code_hash,now+seconds).run();

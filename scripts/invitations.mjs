@@ -1,5 +1,5 @@
 // Owner-only CLI through authenticated Wrangler. Never expose an admin HTTP route.
-import {randomBytes,createHash} from 'node:crypto';
+import {randomBytes,randomInt,createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve,dirname,relative} from 'node:path';
@@ -11,10 +11,21 @@ if(mode==='issue'){
   if(!Number.isInteger(count)||count<1||count>30||!Number.isInteger(credits)||credits<1||credits>100||!Number.isInteger(days)||days<1||days>90)throw new Error('Use 1–30 codes, 1–100 credits and 1–90 days.');
   const folder=resolve('.local-private'),out=resolve(option('--out',`.local-private/invitations-${Date.now()}.md`));
   if(relative(folder,out).startsWith('..')||out===folder)throw new Error('Codes must be saved inside the ignored .local-private folder.');
+  const short=args.includes('--short');
+  const existing=short?execute('SELECT code_hash FROM invitations').flatMap(result=>result.results||[]):[];
+  const used=new Set(existing.map(row=>row.code_hash));
   const expiry=Math.floor(Date.now()/1000)+days*86400,rows=[];
   for(let i=0;i<count;i++){
-    const digits=randomBytes(12).toString('hex').toUpperCase(),code=`LL-${digits.match(/.{4}/g).join('-')}`;
-    const hash=createHash('sha256').update(`LL${digits}`).digest('hex');rows.push({code,hash});
+    let code,hash;
+    for(let attempts=0;attempts<5000;attempts++){
+      const digits=randomBytes(12).toString('hex').toUpperCase();
+      code=short?`${String.fromCharCode(65+randomInt(26))}${randomInt(10)}`:`LL-${digits.match(/.{4}/g).join('-')}`;
+      hash=createHash('sha256').update(code.replaceAll('-','')).digest('hex');
+      if(!used.has(hash)&&code!=='A7')break;
+      hash=undefined;
+    }
+    if(!hash)throw new Error('Short code space exhausted; use longer codes.');
+    used.add(hash);rows.push({code,hash});
   }
   execute(rows.map(({hash})=>`INSERT INTO invitations(code_hash,credits_total,credits_remaining,expires_at) VALUES('${hash}',${credits},${credits},${expiry});`).join('\n'));
   await mkdir(dirname(out),{recursive:true});
